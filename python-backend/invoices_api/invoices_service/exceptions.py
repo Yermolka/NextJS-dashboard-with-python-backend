@@ -1,0 +1,2 @@
+class InvoiceNotFoundError(Exception):
+    pass

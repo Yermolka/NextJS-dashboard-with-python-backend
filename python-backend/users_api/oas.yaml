@@ -1,0 +1,157 @@
+openapi: 3.0.3
+
+info:
+  title: Users API
+  description: API for NextJS Dashboard tutorial
+  version: 1.0
+
+servers:
+  - url: http://localhost:8003
+    description: URL for local development and testing
+
+paths:
+  /users:
+    post:
+      summary: Creates a new User
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSchema'
+      responses:
+        '201':
+          description: A JSON with a new User
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetUserSchema'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /users/{user_email}:
+    parameters:
+      - name: user_email
+        in: path
+        required: true
+        schema:
+          type: string
+    
+    get:
+      summary: Returns a User with given email
+      operationId: getUser
+      responses:
+        '200':
+          description: A JSON with User
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetUserSchema'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+    put:
+      summary: Updates a User
+      operationId: updateUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserSchema'
+      responses:
+        '201':
+          description: A JSON with a new User
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetUserSchema'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+    delete:
+      summary: Deletes a User
+      operationId: deleteUser
+      responses:
+        '204':
+          description: User deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+components:
+  responses:
+    NotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnprocessableEntity:
+      description: The payload contains invalid values
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - status
+      properties:
+        code:
+          type: integer
+        status:
+          type: string
+        errors:
+          type: object
+
+    UserSchema:
+      type: object
+      required:
+        - name
+        - email
+        - password
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+
+    GetUserSchema:
+      type: object
+      required:
+        - name
+        - email
+        - password
+        - id
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        id: 
+          type: string
+          format: uuid
+
+    UpdateUserSchema:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string

@@ -1,0 +1,491 @@
+openapi: 3.0.3
+
+info:
+  title: Invoices API
+  description: API for NextJS Dashboard tutorial
+  version: 1.0
+
+servers:
+  - url: http://localhost:8002
+    description: URL for local development and testing
+
+paths:
+  /invoices:
+    get:
+      parameters:
+        - name: minAmount
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - pending
+              - paid
+      summary: Returns a list of Invoices
+      operationId: getInvoices
+      description: A list in Invoices
+      responses:
+        '200':
+          description: A JSON array of Invoice items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoices:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GetInvoiceSchema'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+    post:
+      summary: Creates a new Invoice
+      operationId: createInvoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvoiceSchema'
+      responses:
+        '201':
+          description: A JSON of the created Invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetInvoiceSchema'
+          links:
+            GetInvoice:
+              operationId: getInvoice
+              parameters:
+                invoice_id: '$response.body#/id'
+              description: The 'id' value can be used for 'GET /invoices/{invoice_id}'
+            UpdateInvoice:
+              operationId: updateInvoice
+              parameters:
+                invoice_id: '$response.body#/id'
+              description: The 'id' value can be used for 'PUT /invoices/{invoice_id}'
+            DeleteInvoice:
+              operationId: deleteInvoice
+              parameters:
+                invoice_id: '$response.body#/id'
+              description: The 'id' value can be used for 'DELETE /invoices/{invoice_id}'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /invoices/latest:
+    get:
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      summary: Get a list of %limit% latest Invoices
+      operationId: getInvoicesLatest
+      description: Latest Invoices
+      responses:
+        '200':
+          description: Object with Invoices array
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetLatestInvoicesSchema'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+
+  /invoices/filtered:
+    get:
+      parameters:
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: currentPage
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+      summary: Returns filtered Invoices
+      operationId: getInvoicesFiltered
+      description: Filtered Invoices
+      responses:
+        '200':
+          description: Object with Invoices array
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetFilteredInvoicesSchema'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /invoices/count:
+    get:
+      parameters:
+        - name: minAmount
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - pending
+              - paid
+      summary: Returns a count of Invoices with optional filters
+      operationId: getInvoicesCount
+      description: Count of Invoices
+      responses:
+        '200':
+          description: Count of Invoices
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /invoices/total:
+    get:
+      parameters:
+        - name: minAmount
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - pending
+              - paid
+      summary: Returns a total of Invoices' amounts with optional filters
+      operationId: getInvoicesTotal
+      description: Total amounts
+      responses:
+        '200':
+          description: Total amounts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /invoices/{invoice_id}:
+    parameters:
+      - in: path
+        name: invoice_id
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Returns a specific Invoice
+      operationId: getInvoice
+      description: Specific Invoice
+      responses:
+        '200':
+          description: A JSON of a specific Invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetInvoiceSchema'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+    put:
+      summary: Updates a specific Invoice
+      operationId: updateInvoice
+      description: Updates a specific Invoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateInvoiceSchema'
+      responses:
+        '201':
+          description: A JSON of the updated Invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetInvoiceSchema'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+    delete:
+      summary: Deletes a specific Invoice
+      operationId: deleteInvoice
+      description: Deletes a specific Invoice
+      responses:
+        '204':
+          description: Invoice was successfully deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /invoices/for_customer/{customer_id}:
+    parameters:
+      - name: customer_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Returns all invoices for a Customer
+      operationId: getInvoicesForCustomer
+      responses:
+        '200':
+          description: A JSON with array of Customer's Invoices
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - invoices
+                properties:
+                  invoices:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GetInvoiceSchema'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  
+  /invoices/for_customer/{customer_id}/count:
+    parameters:
+      - name: customer_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: A JSON with total count of Invoices for a Customer 
+      responses:
+        '200':
+          description: A JSON with count
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - count
+                properties:
+                  count:
+                    type: integer
+                    minimum: 0
+  
+  /invoices/for_customer/{customer_id}/{invoice_status}:
+    parameters:
+      - name: customer_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: invoice_status
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+            - pending
+            - paid
+    get:
+      summary: A JSON with total amount of Customer's Invoices by status
+      responses:
+        '200':
+          description: A JSON with total amount
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - total
+                properties:
+                  total:
+                    type: integer
+                    minimum: 0
+  
+
+components:
+  responses:
+    NotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnprocessableEntity:
+      description: The payload contains invalid values
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - status
+      properties:
+        code:
+          type: integer
+        status:
+          type: string
+        errors:
+          type: object
+
+    InvoiceSchema:
+      type: object
+      required:
+        - customer_id
+        - amount
+      properties:
+        customer_id:
+          type: string
+          format: uuid
+        amount:
+          type: integer
+          minimum: 1
+          maximum: 1000000000
+        status:
+          type: string
+          enum:
+            - pending
+            - paid
+        date:
+          type: string
+
+    UpdateInvoiceSchema:
+      type: object
+      properties:
+        amount:
+          type: integer
+          minimum: 1
+          maximum: 1000000000
+        status:
+          type: string
+          enum:
+            - pending
+            - paid
+        customer_id:
+          type: string
+          format: uuid
+
+    GetFilteredInvoicesSchema:
+      type: object
+      required:
+        - invoices
+      properties:
+        invoices:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - amount
+              - date
+              - status
+              - name
+              - email
+              - image_url
+            properties:
+              id:
+                type: integer
+              amount:
+                type: integer
+                minimum: 1
+                maximum: 1000000000
+              date:
+                type: string
+              status:
+                type: string
+              name:
+                type: string
+              email:
+                type: string
+              image_url:
+                type: string
+
+    GetLatestInvoicesSchema:
+      type: object
+      required:
+        - invoices
+      properties:
+        invoices:
+          type: array
+          items:
+            type: object
+            required:
+              - amount
+              - name
+              - image_url
+              - email
+              - id
+            properties:
+              amount:
+                type: integer
+                minimum: 1
+                maximum: 1000000000
+              name:
+                type: string
+              image_url:
+                type: string
+              email:
+                type: string
+              id:
+                type: integer
+
+    GetInvoiceSchema:
+      type: object
+      required:
+        - customer_id
+        - amount
+        - status
+        - date
+      properties:
+        id:
+          type: integer
+        customer_id:
+          type: string
+          format: uuid
+        amount:
+          type: integer
+          minimum: 1
+        status:
+          type: string
+          enum:
+            - pending
+            - paid
+        date:
+          type: string

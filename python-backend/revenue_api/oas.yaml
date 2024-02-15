@@ -1,0 +1,193 @@
+openapi: 3.0.3
+
+info:
+  title: Revenue API
+  description: API for NextJS Dashboard tutorial
+  version: 1.0
+
+servers:
+  - url: http://localhost:8001
+    description: URL for local development and testing
+
+paths:
+  /revenue:
+    get:
+      parameters:
+      - name: minValue
+        in: query
+        required: false
+        schema:
+          type: integer
+      summary: Returns a list of Revenue items
+      operationId: getRevenues
+      description: A list of Revenue
+      responses:
+        '200':
+          description: A JSON array of Revenue items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  revenue:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GetRevenueSchema'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+    post:
+      summary: Creates a new Revenue entry
+      operationId: createRevenue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRevenueSchema'
+      responses:
+        '201':
+          description: A JSON of the created Revenue
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRevenueSchema'
+          links:
+            GetRevenue:
+              operationId: getRevenue
+              parameters:
+                month: '$response.body#/month'
+              description: The 'month' value can be used for 'GET /revenue/{month}'
+            UpdateRevenue:
+              operationId: updateRevenue
+              parameters:
+                month: '$response.body#/month'
+              description: The 'month' value can be used for 'PUT /revenue/{month}'
+            DeleteRevenue:
+              operationId: deleteRevenue
+              parameters:
+                month: '$response.body#/month'
+              description: The 'month' value can be used for 'DELETE /revenue/{month}'
+        '405':
+          description: Revenue already exists, use PUT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /revenue/{month}:
+    parameters:
+      - in: path
+        name: month
+        required: true
+        schema:
+          $ref: '#/components/schemas/RevenueMonthSchema'
+    get:
+      summary: Returns Revenue for a specific month
+      operaionId: getRevenue
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRevenueSchema'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+    put:
+      summary: Replaces an existing Revenue
+      operationId: updateRevenue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - revenue
+              properties:
+                revenue:
+                  type: integer
+                  minimum: 0
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRevenueSchema'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+    delete:
+      summary: Deletes an existing Revenue
+      operationId: deleteRevenue
+      responses:
+        '204':
+          description: Revenue was deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+components:
+  responses:
+    NotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnprocessableEntity:
+      descriprion: The payload contains invalid values
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - status
+      properties:
+        code: 
+          type: integer
+        status: 
+          type: string
+        errors:
+          type: object
+
+    RevenueMonthSchema:
+      type: string
+      enum:
+        - Jan
+        - Feb
+        - Mar
+        - Apr
+        - May
+        - June
+        - July
+        - Aug
+        - Sep
+        - Oct
+        - Nov
+        - Dec
+
+    GetRevenueSchema:
+      type: object
+      required:
+        - month
+        - revenue
+      properties:
+        month:
+          $ref: '#/components/schemas/RevenueMonthSchema'
+        revenue:
+          type: integer
+          minimum: 0

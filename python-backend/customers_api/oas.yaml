@@ -1,0 +1,282 @@
+openapi: 3.0.3
+
+info:
+  title: Customers API
+  description: API for NextJS Dashboard tutorial
+  version: 1.0
+
+servers:
+  - url: http://localhost:8000
+    description: URL for local development and testing
+
+paths:
+  /customers:
+    get:
+      parameters:
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+      summary: Returns a list of Customer items
+      operationId: getCustomers
+      description: A list of Customers
+      responses:
+        '200':
+          description: A JSON array of Customer items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GetCustomerSchema'
+    
+    post:
+      summary: Creates a new Customer entry
+      operationId: createCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerSchema'
+      responses:
+        '201':
+          description: A JSON of the created Customer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCustomerSchema'
+          links:
+            GetCustomer:
+              operationId: getCustomer
+              parameters:
+                customer_id: '$response.body#/id'
+              description: The 'id' value can be used for 'GET /customers/{customer_id}'
+            UpdateCustomer:
+              operationId: updateCustomer
+              parameters:
+                customer_id: '$response.body#/id'
+              description: The 'id' value can be used for 'PUT /customers/{customer_id}'
+            DeleteCustomer:
+              operationId: deleteCustomer
+              parameters:
+                customer_id: '$response.body#/id'
+              description: The 'id' value can be used for 'DELETE /customers/{customer_id}'
+
+        '405':
+          description: Customer already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /customers/count:
+    get:
+      parameters:
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+      summary: Returns amount of Customers
+      operationId: getCustomersCount
+      responses:
+        '200':
+          description: A number of Customers
+          content:
+            application/json:
+              schema:
+                type: object
+                required: 
+                  - count
+                properties:
+                  count:
+                    type: integer
+                    minimum: 0
+
+  /customers/{customer_id}:
+    parameters:
+      - name: customer_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Returns info about a Customer
+      operationId: getCustomer
+      responses:
+        '200':
+          description: A JSON object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCustomerSchema'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        
+    put:
+      summary: Updates Customer's info
+      operationId: updateCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              parameters:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                email:
+                  type: email
+      responses:
+        '201':
+          description: A JSON object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCustomerSchema'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+      
+    delete:
+      summary: Deletes a Customer
+      operationId: deleteCustomer
+      responses:
+        '204':
+          description: Successfully deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+      
+  /customers/filtered:
+    get:
+      parameters:
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+      summary: Returns an array of FormattedCustomer type
+      operationId: getCustomersFiltered
+      description: For Customer Table
+      responses:
+        '200':
+          description: A JSON array of FormattedCustomers
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - customers
+                properties:
+                  customers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GetFilteredCustomer'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+components:
+  responses:
+    NotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnprocessableEntity:
+      description: The payload contains invalid values
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - status
+      properties:
+        code:
+          type: integer
+        status:
+          type: string
+        errors:
+          type: object
+
+    GetFilteredCustomer:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - image_url
+        - total_invoices
+        - total_pending
+        - total_paid
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+        image_url:
+          type: string
+        total_invoices:
+          type: integer
+          minimum: 0
+        total_pending:
+          type: integer
+          minimum: 0
+        total_paid:
+          type: integer
+          minimum: 0
+
+    CustomerSchema:
+      type: object
+      required:
+        - name
+        - email
+        - image_url
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        image_url:
+          type: string
+
+    GetCustomerSchema:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - image_url
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+        image_url:
+          type: string
+        
